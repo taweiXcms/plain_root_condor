@@ -5,25 +5,31 @@
 ###Checking condor jobs status: condor_q <username> 
 
 ###Plain root .C to be run
-CONFIGFILE="loop.C"
+CONFIGFILE="loopTP.C"
 
 ###All the header/related files needed
-TRANSFERFILE="loop.C,loop.h"
+TRANSFERFILE="loopTP.C,loopTP.h"
 
 ###Folder location within which files are to be run
-DATASET=/mnt/hadoop/cms/store/user/wangj/HI_Btuple/20140218_PAMuon_HIRun2013_PromptReco_v1/*
+#DATASET=/mnt/hadoop/cms/store/user/tawei/Bfinder/BfinderBoostedMC_20141022_Kp/*
+DATASET=/mnt/hadoop/cms/store/user/twang/HI_BfinderNtuple/BfinderBoostedMC_20141022_hckim-HIJINGemb_inclBtoPsiMuMu/*
+#DATASET=/mnt/hadoop/cms/store/user/twang/HI_BfinderNtuple/20141022_PAMuon_HIRun2013_28Sep2013_v1/*
+#DATASET=/mnt/hadoop/cms/store/user/twang/HI_BfinderNtuple/20141022_PAMuon_HIRun2013_PromptReco_v1/*
 
 ###Output file location
-DESTINATION=/net/hisrv0001/home/tawei/HeavyFlavor_20131030/bntuple/root_condor/fout
+#DESTINATION=/mnt/hadoop/cms/store/user/tawei/TnPBntuple/TnPnt_BoostedMC_20141022_Kp
+DESTINATION=/mnt/hadoop/cms/store/user/tawei/TnPBntuple/TnPnt_BfinderBoostedMC_20141022_hckim-HIJINGemb_inclBtoPsiMuMu
+#DESTINATION=/mnt/hadoop/cms/store/user/tawei/TnPBntuple/TnPnt_20141022_PAMuon_HIRun2013_28Sep2013_v1
+#DESTINATION=/mnt/hadoop/cms/store/user/tawei/TnPBntuple/TnPnt_20141022_PAMuon_HIRun2013_PromptReco_v1
 
 ###Output file name
-OUTFILE="test_output"
+OUTFILE="TnPBntuple"
 
 ###Maximum number of files to be run
-MAXFILES=3
+MAXFILES=2000
 
 ###Log file location and it's name
-LOGDIR=/net/hisrv0001/home/tawei/HeavyFlavor_20131030/bntuple/root_condor/logout
+LOGDIR=/net/hisrv0001/home/tawei/HeavyFlavor_20131030/TnP/HIBmeson_TnP/loopTP/logout
 LOGNAME=testrootcondor
 
 ########################## Create subfile ###############################
@@ -35,17 +41,18 @@ mkdir -p $LOGDIR
 
 for file in $DATASET
 do
-    if [ $fileCounter -ge $MAXFILES ]
-    then
-	break
-    fi
-
+  if [ $fileCounter -ge $MAXFILES ]
+  then
+  break
+  fi
     INFILE="$file"
     fileCounter=$((fileCounter+1))
-
-# make the condor file
-cat > subfile <<EOF
-
+  if [ -f $DESTINATION/${OUTFILE}_${fileCounter}.root ]; then
+    echo "Output already exists : ${OUTFILE}_${fileCounter}.root"
+  else 
+    # make the condor file
+    cat > subfile <<EOF
+    
 Universe = vanilla
 Initialdir = .
 Executable = exec_condor.sh
@@ -65,11 +72,10 @@ transfer_input_files = $TRANSFERFILE
 
 Queue
 EOF
-
 ############################ Submit ###############################
-
-#cat subfile
-condor_submit subfile
-mv subfile $LOGDIR/$LOGNAME-$dateTime-$fileCounter.subfile
+    #cat subfile
+    condor_submit subfile
+    mv subfile $LOGDIR/$LOGNAME-$dateTime-$fileCounter.subfile
+  fi
 done
 echo "Submitted $fileCounter jobs to Condor."
